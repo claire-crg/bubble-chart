@@ -1,124 +1,47 @@
-<!DOCTYPE html>
-
 <html>
   <head>
-      
-    <!--Load the AJAX API-->
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-csv/0.71/jquery.csv-0.71.min.js"></script>
-    <script src="https://www.google.com/jsapi"></script>
-    <script src="jquery.csv-0.71.js"></script>
-    
-
     <script type="text/javascript">
-      
-        $(function() { // grab the CSV
-            $.get("iom_bubble_chart.csv", function(csvString) { 
-                // display the contents of the CSV 
-                $("#chart").html(csvString);
-            });
-        });
+      google.charts.load('47', {'packages':['corechart']})
+      google.charts.setOnLoadCallback(drawChart);
         
-        google.load("visualization", "1", {packages:["corechart"]}); google.setOnLoadCallback(drawChart);
+      function drawChart() {
+      var opts = {sendMethod: 'auto'};
+      // Replace the data source URL on next line with your data source URL.
+      var query = new google.visualization.Query('https://docs.google.com/spreadsheets/d/1S9PxhOcxwCLl07A6lOS4s2spBAQY5jxU/edit?usp=sharing&ouid=102467666179040060698&rtpof=true&sd=true');
 
-        	
-        function drawChart() { // grab the CSV
-            $.get("iom_bubble_chart.csv", function(csvString) {
-                
-                var arrayData = $.csv.toArrays(csvString, {onParseValue: $.csv.hooks.castToScalar});
-                
-                var data = new google.visualization.arrayToDataTable(arrayData);
+      // Optional request to return only column C and the sum of column B, grouped by C members.
+      //query.setQuery('select F, H, A');
 
-                var view = new google.visualization.DataView(data); view.setColumns([0,1]);
-                
-                var options = { title: "iom", hAxis: {title: data.getColumnLabel(0), minValue: data.getColumnRange(0).min, maxValue: data.getColumnRange(0).max}, vAxis: {title: data.getColumnLabel(1), minValue: data.getColumnRange(1).min, maxValue: data.getColumnRange(1).max}, legend: 'none' };
+      // Send the query with a callback function.
+      query.send(handleQueryResponse);
+    }
 
-                var chart = new google.visualization.ScatterChart(document.getElementById('chart')); chart.draw(view, options);
-                	
-                }); 
-        }
+    function handleQueryResponse(response) {
 
-        
-/*
-        // Load the Visualization API and the corechart package.
-        google.charts.load('47', {'packages':['corechart']});
-        google.charts.setOnLoadCallback(initialize);
-        
-        //I tried to use this tutorial to add csv data:
-        //https://developers.google.com/chart/interactive/docs/queries-stealth
+    if (response.isError()) {
+      alert('Error in query: ' + response.getMessage() + ' ' + response.getDetailedMessage());
+      return;
+    }
 
-        function initialize() {
-            var opts = {sendMethod: 'auto'};
-            
-            // Replace the data source URL on next line with your data source URL.
-            
-            //I made the spreadsheet public and published it on the web
-            //It is saying it is an error connecting to the data but I do not know how to fix it
-            //I tried to understand how to correct the error, "blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource" but it is too advanced for me to understand.
-            //I tried to add the Access-Control-Allow-Origin in the header but created more errors
-            //These are the links I found explaining the issue:
-                //https://web.dev/cross-origin-resource-sharing/
-                //https://stackoverflow.com/questions/20035101/why-does-my-javascript-code-receive-a-no-access-control-allow-origin-header-i
-
-
-            var query = new google.visualization.Query( 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTit_Q5gQrwmcyGuWRhap7-vjS0vbDJwPtgyjkeAhifaIXT5R2LIQl7oaF8YzjOZJTj1fN88TeE8uwK/pubhtml'
-            );
-            
-            
-
-            // Optional request to return only column C and the sum of column B, grouped by C members.
-            query.setQuery('select year where year = 2020, value, pct_v_world, pct_v_med, med_region');
-            
-            // Send the query with a callback function.
-            query.send(handleQueryResponse);    
-        }
-        
-        /*Example code:
-        //I tried it with the example code and it didn't work either
-        function handleQueryResponse(response) {
-
-          if (response.isError()) {
-            alert('Error in query: ' + response.getMessage() + ' ' + response.getDetailedMessage());
-            return;
-          }
-
-          var data = response.getDataTable();
-          var chart = new google.visualization.PieChart(document.getElementById('chart_div'));
-          chart.draw(data, {width: 400, height: 240, is3D: true});
-        }*/
-        /*
-        function handleQueryResponse(response){
-            if (response.isError()){
-                alert('Error in query' + response.getMessage() + ' ' + response.getDetailedMessage());
-                return;
-            }
-            
-            var options = {
-                title: 'Rate Mediterranean Countries Receive Migrants as a Percentage of Total Migrants in the World and Meditteranean' +
-                  ' X=pct_v_world, Y=pct_v_med, Bubble size=value, Bubble color=med_region',
+    var data = response.getDataTable();
+    
+    var options = {
+                title: 'Rate Mediterranean Countries Receive Migrants as a Percentage of Total Migrants in the World and Meditteranean',
                 hAxis: {title: 'Percentage of World Migrants'},
                 vAxis: {title: 'Percentage of Mediterranean Migrants'},
-                bubble: {textStyle: {fontSize: 11}}
+                bubble: {textStyle: {fontSize: 11}},
+                colors: ['#dd9944', '#9999aa', '#99bbcc', '#cc6622', '#5599aa']
             }
-            
-            var data = response.getDataTable();
-            var chart = new google.visualization.BubbleChart(document.getElementById('chart_div'));
-            chart.draw(data, options);
-            
-            console.log(data);
-        }*/
         
-        //do I need to call the function handleQueryResponse?
-        
+    var chart = new google.visualization.BubbleChart(document.getElementById('chart_div'));
+    chart.draw(data, options);
+    }
     </script>
-    </head>
-    
-    <body>
-        
-        <!--Div that will hold the pie chart-->
-        <div id="chart" style="width:900; height:500"></div>
-        
-    </body>
-    
+  </head>
+
+  <body>
+    <!--Div that will hold the pie chart-->
+    <div id="chart_div" style="width:100%; height:100%"></div>
+  </body>
 </html>
